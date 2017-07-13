@@ -1,0 +1,42 @@
+---
+- name: Pull elastichead image
+  shell: docker pull "{{ elastichead_docker_image }}:{{ elastichead_version }}"
+  register: result_docker
+  changed_when: False
+  until: result_docker|success
+  retries: 3
+  delay: 1
+  tags: update
+
+- name: Start elastichead containers
+  docker_container:
+    name: elastichead
+    image: "{{ elastichead_docker_image }}:{{ elastichead_version }}"
+    network_mode: host
+    state: present
+    restart_policy: unless-stopped
+    restart_retries: 3
+    log_driver: json-file
+    log_options:
+      max-file: "1"
+      max-size: "20m"
+    labels: "{{ elastichead_docker_labels }}"
+    volumes:
+      - /etc/hosts:/etc/hosts
+      - /etc/localtime:/etc/localtime
+
+
+- name: Create init-script rhel6
+  copy: src=elastichead_rhel6 dest=/etc/init.d/elastichead owner=root group=root mode=0755
+  when:
+    ansible_distribution_major_version|int < 7
+    and ansible_os_family == 'RedHat'
+
+- name: Create init-script rhel7
+  copy: src=elastichead_rhel7 dest=/usr/lib/systemd/system/elastichead.service owner=root group=root mode=0644
+  when:
+    ansible_distribution_major_version|int > 6
+    and ansible_os_family == 'RedHat'
+
+- name: Enable init-scripts
+  service: name=elastichead enabled=yes state=started
