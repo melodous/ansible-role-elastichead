@@ -6,7 +6,7 @@
     docker_private_registry_insecure: true
     docker_login_user: ci
     docker_login_password: password
-    kibana_docker_image: nexus.local:18079/melodous/elastichead
+    elastichead_docker_image: nexus.local:18079/melodous/elastichead
     additional_hosts_entries:
       - name: nexus.local
         ip: 192.168.1.200
